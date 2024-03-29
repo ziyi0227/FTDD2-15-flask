@@ -1,6 +1,7 @@
 import random
 import torch
 import numpy as np
+import json
 from flask import Flask, request, jsonify
 from utils.parser import parse_args
 from utils.data_loader import load_data
@@ -88,7 +89,7 @@ def recommend():
     for job in top_indices:
         recommended_items.append(item_dict[str(job.item())])
 
-    return jsonify(recommended_items)
+    return json.dumps(recommended_items, ensure_ascii=False)
 
 if __name__ == '__main__':
     load_model()
