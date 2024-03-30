@@ -72,8 +72,8 @@ def load_model():
         item_dict[each_row.split(",")[0]] = each_row.split(",")[1]
     f.close()
 
-@app.route('/recommend', methods=['GET'])
-def recommend():
+@app.route('/recommend-job', methods=['GET'])
+def recommend_job():
     global args, device, model, item_dict
     user_id = int(request.args.get('user_id', default=4439))
     user = user_gcn_emb[user_id, :]
@@ -90,6 +90,27 @@ def recommend():
         recommended_items.append(item_dict[str(job.item())])
 
     return json.dumps(recommended_items, ensure_ascii=False)
+
+
+@app.route('/recommend-seeker', methods=['GET'])
+def recommend_seeker():
+    global args, device, model, item_dict
+    item_id = int(request.args.get('item_id'))
+    user = user_gcn_emb
+    item = entity_gcn_emb[item_id, :]
+    rate = torch.matmul(user, item.t())
+
+    # 设置要获取的 top-k 值的数量
+    k = 5
+    # 计算 top-k 值及其对应的索引
+    top_values, top_indices = torch.topk(rate, k)
+
+    recommended_items = []
+    for user in top_indices.squeeze():
+        recommended_items.append(user.item())
+
+    return json.dumps(recommended_items, ensure_ascii=False)
+
 
 if __name__ == '__main__':
     load_model()
