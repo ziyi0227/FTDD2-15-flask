@@ -6,8 +6,20 @@ from flask import Flask, request, jsonify
 from utils.parser import parse_args
 from utils.data_loader import load_data
 from modules.KGIN import Recommender
+import pymysql
 
 app = Flask(__name__)
+
+# MySQL数据库连接配置
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'root',
+    'database': 'ft_demo',
+    'cursorclass': pymysql.cursors.DictCursor  # 返回字典形式的结果集
+}
+# 创建数据库连接
+connection = pymysql.connect(**DB_CONFIG)
 
 n_users = 0
 n_items = 0
@@ -18,6 +30,7 @@ args = None
 device = None
 model = None
 item_dict = None
+
 
 def load_model():
     global args, device, model, item_dict, user_gcn_emb, entity_gcn_emb
@@ -44,7 +57,7 @@ def load_model():
     args.gpu_id = 0
     args.context_hops = 3
 
-    device = torch.device("cuda:"+str(args.gpu_id)) if args.cuda else torch.device("cpu")
+    device = torch.device("cuda:" + str(args.gpu_id)) if args.cuda else torch.device("cpu")
 
     """build dataset"""
     train_cf, test_cf, user_dict, n_params, graph, mat_list = load_data(args)
@@ -71,6 +84,7 @@ def load_model():
     for each_row in row:
         item_dict[each_row.split(",")[0]] = each_row.split(",")[1]
     f.close()
+
 
 @app.route('/recommend-job', methods=['GET'])
 def recommend_job():
@@ -109,7 +123,22 @@ def recommend_seeker():
     for user in top_indices.squeeze():
         recommended_items.append(user.item())
 
-    return json.dumps(recommended_items, ensure_ascii=False)
+    try:
+        # 创建游标对象
+        with connection.cursor() as cursor:
+            resume_results = []
+            # 执行 SQL 查询
+            for user_id in recommended_items:
+                sql = "SELECT * FROM Resume WHERE user_id = %s"
+                cursor.execute(sql, (user_id,))
+                # 获取查询结果
+                result = cursor.fetchall()
+                resume_results.append(result)
+        return jsonify(result)
+    except Exception as e:
+        print("数据库查询出错:", e)
+        return jsonify([])
+    # return json.dumps(recommended_items, ensure_ascii=False)
 
 
 if __name__ == '__main__':
