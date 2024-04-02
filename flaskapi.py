@@ -101,7 +101,7 @@ def recommend_job():
 
     recommended_items = []
     for job in top_indices:
-        recommended_items.append(item_dict[str(job.item())])
+        recommended_items.append(job.item())
 
     return json.dumps(recommended_items, ensure_ascii=False)
 
