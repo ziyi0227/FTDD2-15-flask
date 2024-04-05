@@ -7,9 +7,9 @@ from utils.parser import parse_args
 from utils.data_loader import load_data
 from modules.KGIN import Recommender
 import pymysql
-
+from flask_cors import CORS
 app = Flask(__name__)
-
+CORS(app)  # 允许所有来源的跨域请求
 # MySQL数据库连接配置
 DB_CONFIG = {
     'host': 'localhost',
@@ -103,13 +103,29 @@ def recommend_job():
     for job in top_indices:
         recommended_items.append(job.item())
 
-    return json.dumps(recommended_items, ensure_ascii=False)
+    # return json.dumps(recommended_items, ensure_ascii=False)
+    try:
+        with connection.cursor() as cursor:
+            job_results = {}
+            for index, job_id in enumerate(recommended_items):
+                sql = "select * from job_table where ordered_id = %s"
+                cursor.execute(sql, (job_id,))
+                result = cursor.fetchone()
+                if result:
+                    job_results[index] = result
+        # 使用 jsonify 函数将 Python 对象转换为 JSON 格式并返回
+        return jsonify(job_results)
+    except Exception as e:
+        print("数据库查询出错:", e)
+        return jsonify([])
 
 
 @app.route('/recommend-seeker', methods=['GET'])
 def recommend_seeker():
     global args, device, model, item_dict
-    item_id = int(request.args.get('item_id'))
+    # item_id = int(request.args.get('item_id', default=4439))
+    item_id = int(request.args.get('jobId', default=4439))
+    # item_id = request.args.get('item_id')
     user = user_gcn_emb
     item = entity_gcn_emb[item_id, :]
     rate = torch.matmul(user, item.t())
@@ -129,12 +145,12 @@ def recommend_seeker():
             resume_results = []
             # 执行 SQL 查询
             for user_id in recommended_items:
-                sql = "SELECT * FROM Resume WHERE user_id = %s"
+                sql = "SELECT * FROM Resume WHERE id = %s"
                 cursor.execute(sql, (user_id,))
                 # 获取查询结果
                 result = cursor.fetchall()
                 resume_results.append(result)
-        return jsonify(result)
+        return jsonify(resume_results)
     except Exception as e:
         print("数据库查询出错:", e)
         return jsonify([])
