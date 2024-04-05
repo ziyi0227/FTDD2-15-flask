@@ -8,6 +8,8 @@ from utils.data_loader import load_data
 from modules.KGIN import Recommender
 import pymysql
 from flask_cors import CORS
+import re
+
 app = Flask(__name__)
 CORS(app)  # 允许所有来源的跨域请求
 # MySQL数据库连接配置
@@ -30,6 +32,11 @@ args = None
 device = None
 model = None
 item_dict = None
+
+
+def snake_to_camel(name):
+    # 将蛇形命名转换为驼峰命名
+    return re.sub(r'_([a-z])', lambda m: m.group(1).upper(), name)
 
 
 def load_model():
@@ -112,9 +119,10 @@ def recommend_job():
                 cursor.execute(sql, (job_id,))
                 result = cursor.fetchone()
                 if result:
-                    job_results[index] = result
-        # 使用 jsonify 函数将 Python 对象转换为 JSON 格式并返回
-        return jsonify(job_results)
+                    # 将字段名转换为驼峰模式
+                    result_camel = {snake_to_camel(key): value for key, value in result.items()}
+                    job_results[index] = result_camel
+                return jsonify(job_results)
     except Exception as e:
         print("数据库查询出错:", e)
         return jsonify([])
@@ -149,8 +157,10 @@ def recommend_seeker():
                 cursor.execute(sql, (user_id,))
                 # 获取查询结果
                 result = cursor.fetchall()
-                resume_results.append(result)
-        return jsonify(resume_results)
+                # 将字段名转换为驼峰模式
+                result_camel = [{snake_to_camel(key): value for key, value in item.items()} for item in result]
+                resume_results.append(result_camel)
+            return jsonify(resume_results)
     except Exception as e:
         print("数据库查询出错:", e)
         return jsonify([])
