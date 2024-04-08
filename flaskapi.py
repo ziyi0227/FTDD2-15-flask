@@ -9,6 +9,17 @@ from modules.KGIN import Recommender
 import pymysql
 from flask_cors import CORS
 import re
+from fuzzywuzzy import fuzz
+import pymysql
+
+mydb = pymysql.connect(
+    host="127.0.0.1",
+    port=3306,
+    user="root",
+    password="root",
+    database="ft_demo"
+)
+
 
 app = Flask(__name__)
 CORS(app)  # 允许所有来源的跨域请求
@@ -97,7 +108,25 @@ def load_model():
 def recommend_job():
     global args, device, model, item_dict
     user_id = int(request.args.get('user_id', default=4439))
-    user = user_gcn_emb[user_id, :]
+
+    mycursor = mydb.cursor()
+    mycursor.execute("SELECT * from Resume where id =%s", (user_id,))
+    result_a = mycursor.fetchall()
+
+    mycursor.execute("SELECT * FROM Resume where id!=%s",(user_id,))
+    result_b = mycursor.fetchall()
+
+    for item_a in result_a:
+        max_ratio = 0
+        matched_item = ""
+        for item_b in result_b:
+            ratio = fuzz.ratio(item_a[9], item_b[9])
+            if ratio > max_ratio:
+                max_ratio = ratio
+                matched_item = item_b[0]
+
+    # print(matched_item)
+    user = user_gcn_emb[matched_item, :]
     item = entity_gcn_emb
     rate = torch.matmul(user, item.t())
 
@@ -122,7 +151,7 @@ def recommend_job():
                     # 将字段名转换为驼峰模式
                     result_camel = {snake_to_camel(key): value for key, value in result.items()}
                     job_results[index] = result_camel
-                return jsonify(job_results)
+            return jsonify(job_results)
     except Exception as e:
         print("数据库查询出错:", e)
         return jsonify([])
@@ -131,11 +160,29 @@ def recommend_job():
 @app.route('/recommend-seeker', methods=['GET'])
 def recommend_seeker():
     global args, device, model, item_dict
-    # item_id = int(request.args.get('item_id', default=4439))
-    item_id = int(request.args.get('jobId', default=4439))
+    item_id = request.args.get('jobId')
+
+    mycursor = mydb.cursor()
+    mycursor.execute("SELECT * from job_table where id =%s", (item_id,))
+    result_a = mycursor.fetchall()
+
+    mycursor.execute("SELECT * FROM job_table where id!=%s", (item_id,))
+    result_b = mycursor.fetchall()
+
+    for item_a in result_a:
+        max_ratio = 0
+        matched_item1 = ""
+        for item_b in result_b:
+            ratio = fuzz.ratio(item_a[1], item_b[1])
+            if ratio > max_ratio:
+                max_ratio = ratio
+                # matched_item = item_b[-1]
+                matched_item1 = item_b[16]
+
+    print(matched_item1)
     # item_id = request.args.get('item_id')
     user = user_gcn_emb
-    item = entity_gcn_emb[item_id, :]
+    item = entity_gcn_emb[matched_item1, :]
     rate = torch.matmul(user, item.t())
 
     # 设置要获取的 top-k 值的数量
