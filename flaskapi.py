@@ -20,7 +20,6 @@ mydb = pymysql.connect(
     database="ft_demo"
 )
 
-
 app = Flask(__name__)
 CORS(app)  # 允许所有来源的跨域请求
 # MySQL数据库连接配置
@@ -113,7 +112,7 @@ def recommend_job():
     mycursor.execute("SELECT * from Resume where id =%s", (user_id,))
     result_a = mycursor.fetchall()
 
-    mycursor.execute("SELECT * FROM Resume where id!=%s",(user_id,))
+    mycursor.execute("SELECT * FROM Resume where id!=%s", (user_id,))
     result_b = mycursor.fetchall()
 
     for item_a in result_a:
@@ -121,32 +120,32 @@ def recommend_job():
         matched_item = ""
         for item_b in result_b:
             ratio = fuzz.ratio(item_a[9], item_b[9])
-            ratio1 = fuzz.ratio(item_a[2], item_b[2])
-            ratio2 = fuzz.ratio(item_a[10], item_b[10])
-            ratio3 = fuzz.ratio(item_a[11], item_b[11])
-            ratio4 = fuzz.ratio(item_a[13], item_b[13])
-            ratio5 = fuzz.ratio(item_a[15], item_b[16])
-            ratio6 = fuzz.ratio(item_a[17], item_b[17])
-            sum = ratio6+ratio5+ratio4+ratio3+ratio2+ratio1+ratio
+            ratio1 = fuzz.ratio(str(item_a[2]), str(item_b[2]))
+            ratio2 = fuzz.ratio(str(item_a[10]), str(item_b[10]))
+            ratio3 = fuzz.ratio(str(item_a[11]), str(item_b[11]))
+            ratio4 = fuzz.ratio(str(item_a[13]), str(item_b[13]))
+            ratio5 = fuzz.ratio(str(item_a[15]), str(item_b[16]))
+            ratio6 = fuzz.ratio(str(item_a[17]), str(item_b[17]))
+            sum = ratio6 + ratio5 + ratio4 + ratio3 + ratio2 + ratio1 + ratio
             if sum > max_ratio:
                 max_ratio = sum
-                matched_item = item_b[0]
+            matched_item = item_b[0]
 
-    # print(matched_item)
-    user = user_gcn_emb[matched_item, :]
-    item = entity_gcn_emb
-    rate = torch.matmul(user, item.t())
+            # print(matched_item)
+            user = user_gcn_emb[matched_item, :]
+            item = entity_gcn_emb
+            rate = torch.matmul(user, item.t())
 
-    # 设置要获取的 top-k 值的数量
-    k = 5
-    # 计算 top-k 值及其对应的索引
-    top_values, top_indices = torch.topk(rate, k)
+            # 设置要获取的 top-k 值的数量
+            k = 5
+            # 计算 top-k 值及其对应的索引
+            top_values, top_indices = torch.topk(rate, k)
 
-    recommended_items = []
-    for job in top_indices:
-        recommended_items.append(job.item())
+            recommended_items = []
+            for job in top_indices:
+                recommended_items.append(job.item())
 
-    # return json.dumps(recommended_items, ensure_ascii=False)
+                # return json.dumps(recommended_items, ensure_ascii=False)
     try:
         with connection.cursor() as cursor:
             job_results = {}
@@ -182,14 +181,14 @@ def recommend_seeker():
         for item_b in result_b:
             ratio = fuzz.ratio(item_a[1], item_b[1])
             ratio2 = fuzz.ratio(item_a[4], item_b[4])
-            ratio3 = fuzz.ratio(item_a[6], item_b[6])
-            ratio4 = fuzz.ratio(item_a[7], item_b[7])
-            ratio5 = fuzz.ratio(item_a[12], item_b[12])
-            ratio6 = fuzz.ratio(item_a[13], item_b[13])
-            ratio7 = fuzz.ratio(item_a[14], item_b[14])
-            ratio8 = fuzz.ratio(item_a[15], item_b[15])
-            ratio9 = fuzz.ratio(item_a[16], item_b[16])
-            sum = ratio5+ratio4+ratio3+ratio2+ratio+ratio9+ratio8+ratio7+ratio6
+            ratio3 = fuzz.ratio(str(item_a[6]), str(item_b[6]))
+            ratio4 = fuzz.ratio(str(item_a[7]), str(item_b[7]))
+            ratio5 = fuzz.ratio(str(item_a[12]), str(item_b[12]))
+            ratio6 = fuzz.ratio(str(item_a[13]), str(item_b[13]))
+            ratio7 = fuzz.ratio(str(item_a[14]), str(item_b[14]))
+            ratio8 = fuzz.ratio(str(item_a[15]), str(item_b[15]))
+            ratio9 = fuzz.ratio(str(item_a[16]), str(item_b[16]))
+            sum = ratio5 + ratio4 + ratio3 + ratio2 + ratio + ratio9 + ratio8 + ratio7 + ratio6
             if sum > max_ratio:
                 max_ratio = sum
                 # matched_item = item_b[-1]
