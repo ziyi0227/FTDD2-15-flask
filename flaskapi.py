@@ -121,8 +121,15 @@ def recommend_job():
         matched_item = ""
         for item_b in result_b:
             ratio = fuzz.ratio(item_a[9], item_b[9])
-            if ratio > max_ratio:
-                max_ratio = ratio
+            ratio1 = fuzz.ratio(item_a[2], item_b[2])
+            ratio2 = fuzz.ratio(item_a[10], item_b[10])
+            ratio3 = fuzz.ratio(item_a[11], item_b[11])
+            ratio4 = fuzz.ratio(item_a[13], item_b[13])
+            ratio5 = fuzz.ratio(item_a[15], item_b[16])
+            ratio6 = fuzz.ratio(item_a[17], item_b[17])
+            sum = ratio6+ratio5+ratio4+ratio3+ratio2+ratio1+ratio
+            if sum > max_ratio:
+                max_ratio = sum
                 matched_item = item_b[0]
 
     # print(matched_item)
@@ -174,8 +181,17 @@ def recommend_seeker():
         matched_item1 = ""
         for item_b in result_b:
             ratio = fuzz.ratio(item_a[1], item_b[1])
-            if ratio > max_ratio:
-                max_ratio = ratio
+            ratio2 = fuzz.ratio(item_a[4], item_b[4])
+            ratio3 = fuzz.ratio(item_a[6], item_b[6])
+            ratio4 = fuzz.ratio(item_a[7], item_b[7])
+            ratio5 = fuzz.ratio(item_a[12], item_b[12])
+            ratio6 = fuzz.ratio(item_a[13], item_b[13])
+            ratio7 = fuzz.ratio(item_a[14], item_b[14])
+            ratio8 = fuzz.ratio(item_a[15], item_b[15])
+            ratio9 = fuzz.ratio(item_a[16], item_b[16])
+            sum = ratio5+ratio4+ratio3+ratio2+ratio+ratio9+ratio8+ratio7+ratio6
+            if sum > max_ratio:
+                max_ratio = sum
                 # matched_item = item_b[-1]
                 matched_item1 = item_b[16]
 
